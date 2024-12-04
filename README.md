@@ -276,7 +276,13 @@ let combineChoices functionList  =
 * Check out [godelian-toolkit.fsx](godelian-toolkit.fsx)
 * Or look [math-example.fsx](math-example.fsx)
 
-If you have any questions or comments, feel free to reach out to me on BlueSky @sgoguen.bsky.social or on Twitter @sgoguen.
+## Feel Free to Reach Out! 
+
+Please do not hesitate to reach out.  I would love to hear from you if you have questions, comments, ideas or if you want to talk shop.
+
+Also, feel free to add issues, bugs, pull requests or to send me your use cases where this doesn't work for you.  If you have an interesting use case, I'm probably interested in figuring it out somehow.  
+
+You can also contact me on BlueSky @sgoguen.bsky.social or Twitter @sgoguen.
 
 
 
