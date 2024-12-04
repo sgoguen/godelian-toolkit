@@ -6,7 +6,7 @@ We call these `Gödelian Constructors`.
 
 ## What is a Gödelian Constructor?
 
-A Gödelian Constructor is simply a function that takes some kind of big integer and returns a *unique* for that integer.  It's a bijective function that maps every integer to a unique program in your language.
+A Gödelian Constructor is simply a function that takes some kind of big integer and returns a *unique* instance for that integer.  It's a bijective function that maps every integer to a unique program in your language.
 
 ## How do I use The Gödelian Toolkit?
 
@@ -93,11 +93,11 @@ for (i, e) in expressionsThatEqual42 |> Seq.truncate 20 do
 
 ## What's the Goal of The Gödelian Toolkit?
 
-The primary goal of The Gödelian Toolkit is to simply educate people show them how to create tools that let them systematically test inductive data types.  
+The primary goal of The Gödelian Toolkit is to simply educate people by showing them how to create these types of tools that let them systematically test inductive data types.  
 
 ## How does The Gödelian Toolkit work?
 
-The Gödelian Toolkit gives you tools to help your create your own bijective functions with simple building blocks that help you with:
+The Gödelian Toolkit gives you tools to help your create your own bijective functions with simple building blocks that help you build Gödelian constructors for:
 
     1. Product Types
     2. Sum Types
@@ -116,9 +116,9 @@ type Expr =                   //  We have sum type with 3 cases
 
 ## How do we handle Product Types?
 
-In order to handle product types, we need a special pair of functions that can encode and decode an integer into a pair of integers.  These functions are generally called ***pairing functions***, but the ones you're looking at below are called the ***Rosenberg-Strong*** pairing functions.
+In order to handle product types, we need a special pair of functions that can encode and decode an integer into a pair of integers.  These functions are generally called ***pairing functions***, but the ones you're looking at below are the ***Rosenberg-Strong*** pairing functions.
 
-What's super important about these functions is that they are **bijective**.  That means that if you give it a number, it will always give you back a pair of numbers.  And if you give it a pair of numbers, it will always give you back the original number.
+What's super important about all pairing functions is that they are **bijective**.  That means that if you give it a number, it will always give you back a pair of numbers.  And if you give it a pair of numbers, it will always give you back the original number.  The Rosenberg-Strong pairing function adds another quality.  It balances the left and right sides of the tuple so they grow in a balanced way.
 
 ```fsharp
 //  Turns any positive bigint into a (bigint, bigint)
