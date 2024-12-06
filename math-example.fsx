@@ -48,10 +48,16 @@ let expressionsThatEqual42 =
                 yield i, e
     }
 
-//  Let's only print the first 1000
-for (i, e) in expressionsThatEqual42 |> Seq.truncate 1000 do
+for i in 0I .. 10I do
     let e = chooseExpr i
-    printfn "%A -> %s" i (toString e)
+    printfn "Godel Number: %A = %s" i (toString e)
+
+chooseExpr 123098123098213098I |> toString |> printfn "Godel Number: 123098123098213092340983240987 = %s"
+
+// //  Let's only print the first 1000
+// for (i, e) in expressionsThatEqual42 |> Seq.truncate 1000 do
+//     let e = chooseExpr i
+//     printfn "%A -> %s" i (toString e)
 
 // Example output
 // 168 -> 42

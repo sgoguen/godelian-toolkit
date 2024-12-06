@@ -1,6 +1,93 @@
 # The Gödelian Toolkit: Systematically Testing Simple Languages
 
-The Gödelian Toolkit is a small library that can help you generate all possible programs for a language you define.  Each program is assigned a unique number, and each number corresponds to a unique program.  If you pick a random number, you'll always get a valid program back.
+The Gödelian Toolkit is a small library to helps you create a Gödelian numbering system for your toy programming language.
+
+## Hello F# Community!
+
+* If you're here for the F# Advent Calendar, I have preserved the original article here: [F# Advent Calendar 2024: The Gödelian Toolkit](https://sgoguen.github.io/godelian-toolkit/2024/12/fsharp-advent)
+
+## Table of Contents
+
+* [Getting Started](#getting-started)
+    * [What's the Big Idea?](#whats-the-big-idea)
+    * [Downloads](#downloads)
+* [Guides](#guides)
+    * [Quick Starts](#quick-starts)
+        * [Hello Arithmetic!](#hello-Arithmetic)
+        * [Hello Lambda Calculus!](#hello-lambda-calculus)
+    * [How does it work?](#how-does-it-work)
+* [What's Next?](#whats-next)
+* [About][#about]
+
+## What's the Big Idea?
+
+Let's assume you had a simple expression language defined by the following type:
+
+```fsharp
+type Expr =
+    | Num of n: bigint
+    | Neg of Expr
+    | Add of Expr * Expr
+    | Mul of Expr * Expr
+```
+
+We provide you with tools to create what we call a **Gödelian Constructor**.
+
+* This constructor lets you feed it an arbitrarily large integer and it will give you back the *SAME* unique program in your toy language every time.
+* Give it a small number, you get a small program.
+* Give it a large number, you get a large program.
+* Every number corresponds to a unique program.
+* And every program corresponds to a unique number.
+
+Here's the first 10 instances for the above language:
+
+| Gödel Number   | Program       | F# Code                        |
+|----------------|---------------|--------------------------------|
+| 0              | 0             | Num 0                          |
+| 1              | -(0)          | Neg (Num 0)                    |
+| 2              | (0 + 0)       | Add (Num 0, Num 0)             |
+| 3              | (0 * 0)       | Mul (Num 0, Num 0)             |
+| 4              | 1             | Num 1                          |
+| 5              | -(-(0))       | Neg (Neg (Num 0))              |
+| 6              | (0 + -(0))    | Add (Num 0, Neg (Num 0))       |
+| 7              | (0 * -(0))    | Mul (Num 0, Neg (Num 0))       |
+| 8              | 2             | Num 2                          |
+| 9              | -((0 + 0))    | Neg (Add (Num 0, Num 0))       |
+| 10             | (-(0) + -(0)) | Add (Neg (Num 0), Neg (Num 0)) |
+
+
+## What is a Gödelian Numbering System?
+
+Let's assume you had a simple expression language defined by the following type:
+
+```fsharp
+type Expr =
+    | Num of n: bigint
+    | Neg of Expr
+    | Add of Expr * Expr
+    | Mul of Expr * Expr
+```
+
+The Gödelian Toolkit will help you create a function, that we call a **Godelian Constructor** to maps every integer to every possible program in your toy language.
+
+| Gödel Number   | Program        |
+|----------------|----------------|
+| 0              | 0              |
+| 1              | -(0)           |
+| 2              | (0 + 0)        |
+| 3              | (0 * 0)        |
+| 4              | 1              |
+| 5              | -(-(0))        |
+| 6              | (0 + -(0))     |
+| 7              | (0 * -(0))     |
+| 8              | 2              |
+| 9              | -((0 + 0))     |
+| 10             | (-(0) + -(0))  |
+
+
+
+
+ can help you generate all possible programs for a language you define.  Each program is assigned a unique number, and each number corresponds to a unique program.  If you pick a random number, you'll always get a valid program back.
 
 We call these `Gödelian Constructors`.  
 

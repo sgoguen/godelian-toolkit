@@ -1,6 +1,6 @@
 # The Gödelian Toolkit: Systematically Testing Simple Languages
 
-The Gödelian Toolkit is a small library that can help you generate all possible programs for a language you define.  Each program is assigned a unique number, and each number corresponds to a unique program.  If you pick a random number, you'll always get a valid program back.
+The Gödelian Toolkit is a small library that can help you generate all possible programs for a language you define.  Each program is assigned a unique number, and each number corresponds to a unique program.  If you pick a random number, you will always get a valid program back.
 
 We call these `Gödelian Constructors`.  
 
