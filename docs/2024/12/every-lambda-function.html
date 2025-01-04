@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lambda Terms Explorer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+        .terms-container {
+            height: 500px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        .term-row {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        .term-row:hover {
+            background: #f9f9f9;
+        }
+        .term-index {
+            color: #666;
+            margin-right: 16px;
+            width: 48px;
+            text-align: right;
+        }
+        .term-code {
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        // Gödelian Toolkit core functions
+        const sqrt = (z) => {
+            if (z < 0n) { throw new Error("Cannot compute square root of negative number"); }
+            if (z === 0n) { return 0n; }
+            
+            const newtonRaphson = (x) => {
+                const nextX = (x + z / x) / 2n;
+                return nextX >= x ? x : newtonRaphson(nextX);
+            };
+            
+            return newtonRaphson(z);
+        };
+
+        const encodePair = (z) => {
+            const m = sqrt(z);
+            const m2 = m * m;
+            return z - m2 < m ? [z - m2, m] : [m, m2 + 2n * m - z];
+        };
+
+        const decodePair = ([x, y]) => {
+            const m = x > y ? x : y;
+            return m * m + m + x - y;
+        };
+
+        // String utilities
+        const getName = (n) => {
+            n = BigInt(n);
+            if (n < 26n) {
+                return String.fromCharCode(Number(n) + 97);
+            }
+            return getName(n / 26n) + String.fromCharCode(Number(n % 26n) + 97);
+        };
+
+        // Term types
+        class Term {
+            static Var(name) { return { type: 'Var', name }; }
+            static Lambda(name, body) { return { type: 'Lambda', name, body }; }
+            static App(left, right) { return { type: 'App', left, right }; }
+            
+            static toString(term) {
+                switch (term.type) {
+                    case 'Var': return term.name;
+                    case 'Lambda': return `λ${term.name}.${Term.toString(term.body)}`;
+                    case 'App': return `(${Term.toString(term.left)} ${Term.toString(term.right)})`;
+                }
+            }
+        }
+
+        class Variables {
+            constructor(varsAvailable) {
+                this.varsAvailable = BigInt(varsAvailable);
+            }
+
+            count() {
+                return Number(this.varsAvailable);
+            }
+
+            pick(i) {
+                return getName(i);
+            }
+
+            newVar() {
+                const name = this.pick(this.varsAvailable);
+                return [name, new Variables(Number(this.varsAvailable) + 1)];
+            }
+        }
+
+        const createClosedTerm = (() => {
+            const initialVariables = new Variables(0);
+            
+            const getConstructors = (vars) => {
+                const varCount = vars.count();
+                
+                // Finite constructor for variables
+                const finiteConstructor = (i) => Term.Var(vars.pick(i));
+                
+                // Infinite constructors
+                const infiniteConstructors = [
+                    // Lambda abstraction
+                    (enc, n) => {
+                        const [name, newVars] = vars.newVar();
+                        return Term.Lambda(name, enc(newVars, n));
+                    },
+                    // Application
+                    (enc, n) => {
+                        const [l, r] = encodePair(n);
+                        return Term.App(enc(vars, l), enc(vars, r));
+                    }
+                ];
+                
+                // Try finite options first
+                if (varCount > 0) {
+                    return [(enc, n) => {
+                        n = BigInt(n);
+                        if (n < BigInt(varCount)) {
+                            return finiteConstructor(Number(n));
+                        } else {
+                            n = n - BigInt(varCount);
+                            const d = n / 2n;
+                            const r = n % 2n;
+                            return infiniteConstructors[Number(r)](enc, d);
+                        }
+                    }];
+                }
+                
+                return infiniteConstructors;
+            };
+            
+            const constructor = (vars, n) => {
+                const functionList = getConstructors(vars);
+                const length = BigInt(functionList.length);
+                const d = BigInt(n) / length;
+                const r = BigInt(n) % length;
+                const f = functionList[Number(r)];
+                return f(constructor, d);
+            };
+            
+            return (n) => constructor(initialVariables, n);
+        })();
+
+        function InfiniteLambdaTerms() {
+            const [terms, setTerms] = React.useState([]);
+            const [lastIndex, setLastIndex] = React.useState(0);
+            const batchSize = 20;
+
+            const loadMoreTerms = () => {
+                const newTerms = [];
+                for (let i = lastIndex; i < lastIndex + batchSize; i++) {
+                    const term = createClosedTerm(i);
+                    newTerms.push({
+                        index: i,
+                        term: Term.toString(term)
+                    });
+                }
+                setTerms(prev => [...prev, ...newTerms]);
+                setLastIndex(lastIndex + batchSize);
+            };
+
+            React.useEffect(() => {
+                loadMoreTerms();
+            }, []);
+
+            const handleScroll = (e) => {
+                const bottom = e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 100;
+                if (bottom) {
+                    loadMoreTerms();
+                }
+            };
+
+            return (
+                <div className="card">
+                    <div className="title">Lambda Terms Explorer</div>
+                    <div 
+                        className="terms-container"
+                        onScroll={handleScroll}
+                    >
+                        {terms.map(({ index, term }) => (
+                            <div 
+                                key={index}
+                                className="term-row"
+                            >
+                                <span className="term-index">{index}:</span>
+                                <code className="term-code">{term}</code>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<InfiniteLambdaTerms />);
+    </script>
+</body>
+</html>

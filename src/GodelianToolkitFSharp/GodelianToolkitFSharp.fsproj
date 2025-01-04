@@ -8,8 +8,10 @@
 
   <ItemGroup>
     
+    <Compile Include="Math.fs" />
     <Compile Include="TestUtils.fs" />
     <Compile Include="Toolkit.fs" />
+    <Compile Include="Bijections.fs" />
     <Compile Include="MathExample.fs" />
     <Compile Include="LambdaExample.fs" />
     <Compile Include="Tests.fs" />

@@ -8,23 +8,57 @@ open GodelianTooklit
 
 // Define a recursive type
 type Expr =
-    | Num of n: bigint
+    | Const of int
+    | Var of string
     | Neg of Expr
     | Add of Expr * Expr
     | Mul of Expr * Expr
 
+let rec toString =
+    function
+    | Const n -> n.ToString()
+    | Var n -> n
+    | Neg e -> sprintf "-(%s)" (toString e)
+    | Add(l, r) -> sprintf "(%s + %s)" (toString l) (toString r)
+    | Mul(l, r) -> sprintf "(%s * %s)" (toString l) (toString r)
+
+let getName n = Strings.Alpha.fromInt n
+
+type Variables(varsAvailable: bigint) =
+    member this.Count = int (varsAvailable)
+    member this.Pick(i) = getName (i)
+
+    member this.NewVar() =
+        let name = this.Pick(varsAvailable)
+        (name, Variables(varsAvailable + 1I))
+
 // Create your universal constructor!
-let chooseExpr: bigint -> Expr =
+let rec chooseExpr: bigint -> Expr =
     combineChoices
-        [   fun enc n -> Num(n)
+        [   fun enc n -> Const(int(n))
+            fun enc n -> Var(getName (n))
             fun enc n -> Neg(enc n)
             fun enc (Pair(l, r)) -> Add(enc l, enc r)
             fun enc (Pair(l, r)) -> Mul(enc l, enc r) ]
+and (|E|) = chooseExpr
+
+// let createClosedTerm: bigint -> Expr =
+//     let initialVariables = Variables(0I)
+
+//     initialVariables
+//     |> combineChoicesWithContext (fun (vars) ->
+//         tryFiniteFirst
+//             vars.Count
+//             (fun i -> Var(vars.Pick(i)))
+//             [ fun enc n ->
+//                   let (name, newVars) = vars.NewVar()
+//                   Lamda(name, enc newVars n)
+//               fun enc (Pair(l, r)) -> App(enc vars l, enc vars r) ])            
 
 //  Try printing out the first 10 instances!
 for i in 0I .. 10I do
     let e = chooseExpr i
-    printfn "Godel Number: %A = %A" i (e)
+    printfn "Godel Number: %A = %A" i (toString e)
 
 // Godel Number: 0 = Num 0
 // Godel Number: 1 = Neg (Num 0)

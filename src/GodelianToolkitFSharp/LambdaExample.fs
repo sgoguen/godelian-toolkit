@@ -178,17 +178,18 @@ let createSimple2: bigint -> Term =
           fun enc (Pair(l, r)) -> App(enc l, enc r) ]
 
 //  Let's make a version that allows us to pass in initial contextual information
-let combineChoicesWithContext initialContext getOptions =
+let combineChoicesWithContext getOptions initialContext (n: bigint) =
 
     //  We add a parameter that now includes context
-    let rec chooseFunction context n =
+    let rec chooseFunction (context: 'a) (n: bigint) =
         let functionList = getOptions (context)
         let length = bigint (List.length functionList)
-        let (d, r) = bigint.DivRem(n, length)
+        let (d: bigint, r: bigint) = bigint.DivRem(n, length)
         let f = functionList.[int (r)]
         f chooseFunction d
 
-    chooseFunction initialContext
+    let x = chooseFunction initialContext n
+    x
 
 
 //  Let's make a version that only generates closed terms
@@ -196,7 +197,8 @@ let combineChoicesWithContext initialContext getOptions =
 let createSimple3: bigint -> Term =
     let variablesAvailable = -1
 
-    combineChoicesWithContext variablesAvailable (fun (vars) ->
+    variablesAvailable
+    |> combineChoicesWithContext (fun (vars) ->
         let makeVar enc n = Var(int n)
         let makeLamda enc n = Lamda(enc (vars + 1) n)
         let makeApp enc (Pair(l, r)) = App(enc vars l, enc vars r)
@@ -247,7 +249,8 @@ let tryFiniteFirst (numberOfFiniteOptions: int) finiteConstuctor infiniteConstru
 let simplerConstructorYet: bigint -> Term =
     let variablesAvailable = 0
 
-    combineChoicesWithContext variablesAvailable (fun (varsAvailable) ->
+    variablesAvailable
+    |> combineChoicesWithContext (fun (varsAvailable) ->
         let makeVar enc n = Var(int n)
         let makeLamda enc n = Lamda(enc (varsAvailable + 1) n)
 
@@ -267,4 +270,37 @@ let testSameAsReference2 () =
 //  Should we try combining tryFiniteFirst and combineChoicesWithContext
 //  into a single utility?
 
-    
+let chooseFinite getCount pick otherOptions n context =
+    let rec chooseFunction (n: bigint) : 'b =
+        let length: bigint = getCount context
+        let (d: bigint, r: bigint) = bigint.DivRem(n, length)
+
+        if d = 0I then
+            pick context r
+        else
+            let f = otherOptions |> List.item (int r)
+            let r = f context chooseFunction d
+            r
+
+    chooseFunction n
+
+
+[<AbstractClass>]
+type FiniteOptions<'context, 'selection>(context: 'context) =
+    abstract member Count: bigint
+    abstract member Pick: bigint -> 'selection
+
+    member this.Choose(n: bigint, otherOptions) =
+        let r = this |> chooseFinite (fun o -> o.Count) (fun o -> o.Pick) otherOptions n
+
+        Unchecked.defaultof<_> ()
+// let rec chooseFunction (n: bigint) =
+//     let length = this.Count
+//     let (d: bigint, r: bigint) = bigint.DivRem(n, length)
+//     if d = 0I then
+//         this.Pick r
+//     else
+//         let f = otherOptions |> List.item (int r)
+//         f context chooseFunction d
+
+// chooseFunction n

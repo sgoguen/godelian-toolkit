@@ -32,8 +32,7 @@ let createSimple: bigint -> Expr =
           fun enc (Pair(l, r)) -> Mul(enc l, enc r) ]
 
 open Xunit
-
-let inline (==>) x y = (x, y)
+open TestUtils
 
 let examples = [
     0I ==> Num(0I)

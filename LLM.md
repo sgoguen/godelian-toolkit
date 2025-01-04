@@ -1,10 +1,17 @@
+# Hi LLM
+
+These are a list of files I want you to know about:
+
+BEGIN README.md
+----------------------------------------------
+
 # The Gödelian Toolkit: Systematically Testing Simple Languages
 
 The Gödelian Toolkit is a small library to helps you create a Gödelian numbering system for your toy programming language.
 
 ## Hello F# Community!
 
-* If you're here for the F# Advent Calendar, I preserved the original article here: [F# Advent Calendar 2024: The Gödelian Toolkit](https://sgoguen.github.io/godelian-toolkit/2024/12/fsharp-advent)
+* If you're here for the F# Advent Calendar, I have preserved the original article here: [F# Advent Calendar 2024: The Gödelian Toolkit](https://sgoguen.github.io/godelian-toolkit/2024/12/fsharp-advent)
 
 ## Table of Contents
 
@@ -31,7 +38,6 @@ Let's assume you had a simple math expression language:
 
 //  Load the toolkit
 #load "godelian-toolkit.fsx"
-// Open the module
 open GodelianTooklit
 
 //  Define your expression type
@@ -70,28 +76,19 @@ let rec eval =
     | Add(l, r) -> eval l + eval r
     | Mul(l, r) -> eval l * eval r
 
-//  Let's find expressions that evaluate to 42
-for i in 0I .. 20000I do
+//  Find all the expressions that evaluate to 42 in the first 1000 instances
+for i in 0I .. 1000I do
     let e = chooseExpr i
     if eval e = 42I then
         printfn "Godel Number: %A = %s" i (toString e)
-
-// Godel Number: 168 = 42
-// Godel Number: 2693 = -(-(42))
-// Godel Number: 3235 = (6 * 7)
-// Godel Number: 3267 = (7 * 6)
-// Godel Number: 12595 = (3 * 14)
-// Godel Number: 12947 = (14 * 3)        
 ```
 
-You can find the full code in [math-example.fsx](math-example.fsx).
-
+Let's try a slightly more interesting language.
 
 ## Hello Lambda Calculus!
 
-Let's try a slightly more interesting language.  We're going to define a simple lambda calculus language.
-
 ```fsharp
+// Define a De Bruijn encoding of lambda terms
 type Term =
     | Var of string // Variable reference
     | Lamda of string * Term // Abstraction - (Lambas)
@@ -544,3 +541,254 @@ out [Paul Tarau's work](https://ptarau.github.io/).  First, his Prolog
 implementations are super cool.  Second, how he creates Bijective Gödel Encodings in Prolog and explores these spaces is mind-blowingly interesting.
 
 For his papers, check him out on [Google Scholar](https://scholar.google.com/scholar?q=Bijective+Godel+Encoding).
+
+
+
+
+BEGIN godelian-toolkit.fsx
+----------------------------------------------
+
+////////////////////////////////////////////////////////////////////////
+///  The Gödelian Toolkit
+////////////////////////////////////////////////////////////////////////
+
+module GodelianTooklit
+
+let sqrt (z: bigint) : bigint =
+    if z < 0I then
+        invalidArg "z" "Cannot compute the square root of a negative number"
+    elif z = 0I then
+        0I
+    else
+        let rec newtonRaphson (x: bigint) : bigint =
+            let nextX = (x + z / x) / 2I
+            if nextX >= x then x else newtonRaphson nextX
+
+        newtonRaphson z
+
+let encodePair (z: bigint) : bigint * bigint =
+    let m = sqrt (z)
+    let m2 = m * m
+    if z - m2 < m then (z - m2, m) else (m, m2 + 2I * m - z)
+
+let (|Pair|) = encodePair
+
+let decodePair (p: bigint * bigint) : bigint =
+    let (x, y) = p
+    let m = max x y
+    m * m + m + x - y
+
+
+let combineChoices functionList =
+    let length = bigint (List.length functionList)
+
+    let rec chooseFunction n =
+        let (d, r) = bigint.DivRem(n, length)
+        let f = functionList.[int (r)]
+        f chooseFunction d
+
+    chooseFunction
+
+
+let combineChoicesWithContext getOptions initialContext =
+
+    //  We add a parameter that now includes context
+    let rec chooseFunction context n =
+        let functionList = getOptions (context)
+        let length = bigint (List.length functionList)
+        let (d, r) = bigint.DivRem(n, length)
+        let f = functionList.[int (r)]
+        f chooseFunction d
+
+    chooseFunction initialContext
+
+
+let tryFiniteFirst (numberOfFiniteOptions: int) finiteConstuctor infiniteConstructors =
+    let numberOfFiniteOptions = numberOfFiniteOptions - 1
+    let length = bigint (List.length infiniteConstructors)
+
+    if numberOfFiniteOptions >= 0 then
+        [ (fun enc n ->
+              if n <= (bigint numberOfFiniteOptions) then
+                  finiteConstuctor (int n)
+              else
+                  let n = n - (bigint (numberOfFiniteOptions + 1))
+                  let (d, r) = bigint.DivRem(n, length)
+                  let f = infiniteConstructors.[int r]
+                  f enc d) ]
+    else
+        infiniteConstructors
+
+module Counter = 
+    let makeCounter () =
+        let mutable counter = 0I
+        fun () ->
+            let result = counter
+            counter <- counter + 1I
+            result
+
+
+module Strings = 
+    module Alpha = 
+        let rec fromInt n =
+            if n < 26I then
+                string (char (int 'a' + int n))
+            else
+                fromInt (n / 26I) + string (char (int 'a' + int (n % 26I)))
+
+
+[<AbstractClass>]
+type FiniteOptions<'context,'selection>(context: 'context) = 
+    abstract member Count : bigint
+    abstract member Pick : bigint -> 'selection
+    member this.Choose(n: bigint, otherOptions) = 
+        
+        let rec chooseFunction (n: bigint) =
+            let length = this.Count
+            let (d: bigint, r: bigint) = bigint.DivRem(n, length)
+            if d = 0I then
+                this.Pick r
+            else
+                let f = otherOptions |> List.item (int r)
+                f context chooseFunction d
+
+        chooseFunction n
+
+
+
+// module Finite = 
+    
+//     type FiniteOptions(varsAvailable: bigint) = 
+//         member this.Count = int(varsAvailable)
+//         member this.Pick(i) = getName(i)
+//         member this.NewVar() = 
+//             let name = this.Pick(varsAvailable)
+//             (name, Variables(varsAvailable + 1I))
+
+//     type FiniteOptions<'a,'b>(context: 'a, getCount, pickOptions) = 
+//         member this.Count : int = getCount context
+//         member this.Pick(i: int): 'b = pickOptions i context
+
+//     type ListOptions<'a>(list: 'a list) = 
+//         inherit FiniteOptions<'a list, 'a>(list, List.length, List.item)
+
+//     type AutoListOptions<'a>(list: 'a list) = 
+//         inherit FiniteOptions<'a list, 'a>(list, List.length, List.item)
+
+
+BEGIN lambda-example-2.fsx
+----------------------------------------------
+
+#load "godelian-toolkit.fsx"
+
+open GodelianTooklit
+
+// Define a simple Lambda Calculus language
+// with a simple default syntax
+type Term =
+    | Var of string // Variable reference
+    | Lamda of string * Term // Abstraction - (Lambas)
+    | App of Term * Term // Function application
+
+    override this.ToString() =
+        match this with
+        | Var name -> name
+        | Lamda(name, body) -> sprintf "λ%s.%s" name (body.ToString())
+        | App(l, r) -> sprintf "(%s %s)" (l.ToString()) (r.ToString())
+
+
+// Let's use this utility from the toolkit to turn numbers into strings
+// for our variable names.
+let getName n = Strings.Alpha.fromInt n
+
+//  We can create a naive constructor that generates all terms
+//  Unfortunately, this will generate terms that are not closed.
+//  This means it will define functions that reference variables
+//  that are not bound by a lambda function.  :'(
+let naiveConstructor: bigint -> Term =
+    combineChoices
+        [ fun enc varName -> Var(getName varName)
+          fun enc (Pair(name, body)) -> Lamda(getName name, enc body)
+          fun enc (Pair(l, r)) -> App(enc l, enc r) ]
+
+
+
+//  Let's take a look at some examples
+for i in 0I .. 10I do
+    let e = naiveConstructor i
+    printfn "Godel Number: %A = %A" i (e.ToString())
+
+// Produces examples like:
+// Godel Number: 0 = "a"
+// Godel Number: 1 = "λa.a"
+// Godel Number: 2 = "(a a)"
+// Godel Number: 3 = "b"
+// Godel Number: 4 = "λa.λa.a"
+// Godel Number: 5 = "(a λa.a)"
+// Godel Number: 6 = "c"
+// Godel Number: 7 = "λb.λa.a"
+// Godel Number: 8 = "(λa.a λa.a)"
+// Godel Number: 9 = "d"
+// Godel Number: 10 = "λb.a"
+
+
+//  How many of these terms are valid closed terms?
+
+
+//  We can fix this by using some new tools in the toolkit.
+//  1. While we're constructing an instance of our inductive type,
+//     we add a notion of context that we can keep track of while
+//     we're constructing the term.  In this case, we'll keep track
+//     of the number of variables that are available to bind.
+//  2. We also need to treat finite and infinite options differently.
+//     Here we use tryFiniteFirst to map the first n options to some
+//     finite constructor, everything else is mapped to an infinite
+//     constructor.
+
+type Variables(varsAvailable: bigint) =
+    member this.Count = int (varsAvailable)
+    member this.Pick(i) = getName (i)
+
+    member this.NewVar() =
+        let name = this.Pick(varsAvailable)
+        (name, Variables(varsAvailable + 1I))
+
+let createClosedTerm: bigint -> Term =
+    let initialVariables = Variables(0I)
+
+    initialVariables
+    |> combineChoicesWithContext (fun (vars) ->
+        tryFiniteFirst
+            vars.Count
+            (fun i -> Var(vars.Pick(i)))
+            [ fun enc n ->
+                  let (name, newVars) = vars.NewVar()
+                  Lamda(name, enc newVars n)
+              fun enc (Pair(l, r)) -> App(enc vars l, enc vars r) ])
+
+
+for i in 0I .. 100I do
+    let e = createClosedTerm i
+    printfn "Godel Number: %A = %A" i (e.ToString())
+
+// Produces examples like:
+
+// Godel Number: 0 = "λa.a"
+// Godel Number: 1 = "(λa.a λa.a)"
+// Godel Number: 2 = "λa.λb.a"
+// Godel Number: 3 = "(λa.a (λa.a λa.a))"
+// Godel Number: 4 = "λa.(a a)"
+// Godel Number: 5 = "((λa.a λa.a) (λa.a λa.a))"
+// Godel Number: 6 = "λa.λb.b"
+// Godel Number: 7 = "((λa.a λa.a) λa.a)"
+// Godel Number: 8 = "λa.(a λb.a)"
+// Godel Number: 9 = "(λa.a λa.λb.a)"
+// Godel Number: 10 = "λa.λb.λc.a"
+// Godel Number: 11 = "((λa.a λa.a) λa.λb.a)"
+
+
+//  This is work-in-progress and I would love to hear your ideas.
+
+//  How do you think this example could be improved?
+
+

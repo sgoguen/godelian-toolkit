@@ -1,0 +1,4 @@
+(library
+ (name math)
+ (public_name godelian_toolkit.math)
+ (libraries zarith))
