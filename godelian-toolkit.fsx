@@ -29,7 +29,7 @@ let decodePair (p: bigint * bigint) : bigint =
     m * m + m + x - y
 
 
-let combineChoices functionList =
+let combineChoices (functionList: ((bigint -> 'a) -> bigint -> 'a) list) (n: bigint): 'a =
     let length = bigint (List.length functionList)
 
     let rec chooseFunction n =
@@ -37,10 +37,10 @@ let combineChoices functionList =
         let f = functionList.[int (r)]
         f chooseFunction d
 
-    chooseFunction
+    chooseFunction n
 
 
-let combineChoicesWithContext getOptions initialContext =
+let combineChoicesWithContext (getOptions: 'a -> (('a -> bigint -> 'b) -> bigint -> 'b) list) (initialContext: 'a): bigint -> 'b =
 
     //  We add a parameter that now includes context
     let rec chooseFunction context n =
@@ -53,7 +53,7 @@ let combineChoicesWithContext getOptions initialContext =
     chooseFunction initialContext
 
 
-let tryFiniteFirst (numberOfFiniteOptions: int) finiteConstuctor infiniteConstructors =
+let tryFiniteFirst (numberOfFiniteOptions: int) (finiteConstuctor: int -> 'b) (infiniteConstructors: ('a -> bigint -> 'b) list) =
     let numberOfFiniteOptions = numberOfFiniteOptions - 1
     let length = bigint (List.length infiniteConstructors)
 

@@ -1,5 +1,7 @@
 {
     "FSharp.inlayHints.typeAnnotations": false,
     "FSharp.inlayHints.parameterNames": false,
-    "editor.inlayHints.enabled": "offUnlessPressed"
+    "editor.inlayHints.enabled": "offUnlessPressed",
+    "deno.enable": true,
+    "liveServer.settings.port": 5501
 }
