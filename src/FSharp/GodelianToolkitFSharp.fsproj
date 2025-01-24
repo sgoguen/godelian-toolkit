@@ -12,6 +12,7 @@
     <Compile Include="TestUtils.fs" />
     <Compile Include="Toolkit.fs" />
     <Compile Include="Bijections.fs" />
+    <Compile Include="Builder.fs" />
     <Compile Include="MathExample.fs" />
     <Compile Include="LambdaExample.fs" />
     <Compile Include="Tests.fs" />

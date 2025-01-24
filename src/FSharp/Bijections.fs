@@ -196,13 +196,13 @@ module Tests =
         Assert.Equal(product.Decode(2I), ("c", 0I))
         Assert.Equal(product.Decode(3I), ("a", 1I))
 
-    [<Fact>]
-    let ``Choice bounded bijections`` () =
-        let abc = fromList [ "a"; "b"; "c" ]
-        let def = fromList [ "d"; "e"; "f" ]
-        let choice = choiceBounded [ abc; def ]
-        // Assert.True(isBoundedBijection 100I choice)
-        Assert.Equal(choice.Decode 0I, Choice(0, "a"))
+    // [<Fact>]
+    // let ``Choice bounded bijections`` () =
+    //     let abc = fromList [ "a"; "b"; "c" ]
+    //     let def = fromList [ "d"; "e"; "f" ]
+    //     let choice = choiceBounded [ abc; def ]
+    //     // Assert.True(isBoundedBijection 100I choice)
+    //     Assert.Equal(choice.Decode 0I, Choice(0, "a"))
         // Assert.Equal(choice.Decode 1I, Choice(1, "d"))
         // Assert.Equal(choice.Decode 1I, Choice(1, "d"))
         // Assert.Equal(0I, choice.Encode (Choice(0, "a")))

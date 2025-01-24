@@ -146,19 +146,6 @@ class Variables {
     }
 }
 
-// let createClosedTerm: bigint -> Term =
-//     let initialVariables = Variables(0I)
-
-//     initialVariables
-//     |> combineChoicesWithContext (fun (vars) ->
-//         tryFiniteFirst
-//             vars.Count
-//             (fun i -> Var(vars.Pick(i)))
-//             [ fun enc n ->
-//                   let (name, newVars) = vars.NewVar()
-//                   Lamda(name, enc newVars n)
-//               fun enc (Pair(l, r)) -> App(enc vars l, enc vars r) ])
-
 function createClosedTerm(n: bigint): Term {
     const initialVariables = new Variables(0n);
 
@@ -203,6 +190,3 @@ Deno.test("createClosedTerm", () => {
 // // Godel Number: 9 = "(λa.a λa.λb.a)"
 // // Godel Number: 10 = "λa.λb.λc.a"
 // // Godel Number: 11 = "((λa.a λa.a) λa.λb.a)"
-
-Deno.test("Final Test", () => {
-});

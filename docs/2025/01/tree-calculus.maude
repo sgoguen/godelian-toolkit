@@ -1,0 +1,115 @@
+--- Tree Calculus
+
+--- The following module defines the core operations of Barry Jay's tree calculus,
+--- known as the TRIAGE calculus.
+
+
+
+--- For our purposes, we'll represent Δ as the ASCII letter l to represent a leaf.
+
+--- Let's define the syntax of the TRIAGE calculus.
+fmod TRIAGE-SYNTAX is
+    --- protecting BOOL .
+    --- The natural trees can be represented algebraically by the following BNF:
+    --- M, N ::= Δ | M N
+
+    ---  Trees are represented by the sort Expr.
+    sort Expr .
+
+    --- Instead of Δ, which is not supported by Maude, we'll use l to represent a leaf.
+    op l : -> Expr [ctor] .                          --- Leaf
+
+    --- Here we define the left-associative application
+    op __ : Expr Expr -> Expr [ctor gather (E e)] .  --- Tree
+
+endfm
+
+fmod TRIAGE-CORE is
+
+    protecting TRIAGE-SYNTAX .
+
+    vars W X Y Z : Expr .
+
+    eq l l Y Z = Y .                --- K - Deletes the third argument
+    eq l (l X) Y Z = Y Z (X Z) .    --- S - Duplicates the third argument
+    eq l (l W X) Y Z = Z W X .      --- F - Decomposes the first argument to expose branches
+
+endfm
+
+
+fmod TRIAGE-OPERATORS is
+
+    protecting TRIAGE-CORE .
+
+    op K : -> Expr .
+    op I : -> Expr .
+    op D : -> Expr .
+    op S : -> Expr .
+    op d_ : Expr -> Expr .
+
+    vars w x y z : Expr .
+
+    eq K = l l .                  --- The K combinator
+    eq I = l (l l) (l l) .        --- The I combinator
+    eq D = l (l l) (l l l) .      --- The D combinator
+    eq S = D (K D) (D K (K D)) .  --- The S combinator
+
+    eq d x = D x .                --- 
+
+endfm
+
+fmod T-BOOL is
+    protecting TRIAGE-OPERATORS .
+
+    op t : -> Expr .
+    op f : -> Expr .
+
+    op and : -> Expr .
+    op or : -> Expr .
+    op implies : -> Expr .
+    op nt : -> Expr .
+    op iif : -> Expr .
+
+    eq t = K .
+    eq f = K I .
+
+    eq and = (d(K (K I))) .
+    eq or = (d(K K)) I .
+    eq implies = d(K K) .
+    eq nt = (d(K K)) ((d(K (K I))) I) .
+    eq iif = D (D I nt) D .
+
+endfm
+
+--- reduce t .
+--- reduce f .
+
+--- Let's check out operations to make sure they reduce they way we expect them to reduce
+--- red (and t t) == t .
+--- red and f t == f .
+--- red and t f == f .
+--- red and f f == f .
+--- red and t t == t .
+
+--- red or f f == f .
+--- red or f t == t .
+--- red or t f == t .
+--- red or t t == t .
+
+
+--- red nt f == t .
+--- red nt t == f .
+
+--- red implies f f == t .
+--- red implies f t == t .
+--- red implies t f == f .
+--- red implies t t == t .
+
+
+red iif f t == f .
+red iif t f == f .
+red iif t t == t .
+red iif f f == t .
+
+
+quit

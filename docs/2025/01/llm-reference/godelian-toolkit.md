@@ -1,3 +1,90 @@
+# An LLM's Guide to the Godelian Toolkit
+
+## Overview
+
+The Gödelian Toolkit is a set of F# functions and types that facilitate constructing bijective (one-to-one) mappings between bigint values and instances of inductive data types (e.g., ASTs for programming languages).
+
+This toolkit allows you to create what we want to call Bijective Gödelian constructors, which is a function that takes a bigint and returns an instance of some data type.  A Bijective Gödelian constructors should always assign a unique bigint to each unique instance (value-wise comparison, not reference-wise comparison)
+so that it effectively indexes the set of all possible **VALID** instances of the data type that you want to construct.
+
+## The Source Code for godelian-toolkit.fs
+
+```fsharp
+////////////////////////////////////////////////////////////////////////
+///  The Gödelian Toolkit
+////////////////////////////////////////////////////////////////////////
+
+module GodelianTooklit
+
+let sqrt (z: bigint) : bigint =
+    if z < 0I then
+        invalidArg "z" "Cannot compute the square root of a negative number"
+    elif z = 0I then
+        0I
+    else
+        let rec newtonRaphson (x: bigint) : bigint =
+            let nextX = (x + z / x) / 2I
+            if nextX >= x then x else newtonRaphson nextX
+
+        newtonRaphson z
+
+let encodePair (z: bigint) : bigint * bigint =
+    let m = sqrt (z)
+    let m2 = m * m
+    if z - m2 < m then (z - m2, m) else (m, m2 + 2I * m - z)
+
+let (|Pair|) = encodePair
+
+let decodePair (p: bigint * bigint) : bigint =
+    let (x, y) = p
+    let m = max x y
+    m * m + m + x - y
+
+
+let combineChoices (functionList: ((bigint -> 'a) -> bigint -> 'a) list) (n: bigint): 'a =
+    let length = bigint (List.length functionList)
+
+    let rec chooseFunction n =
+        let (d, r) = bigint.DivRem(n, length)
+        let f = functionList.[int (r)]
+        f chooseFunction d
+
+    chooseFunction n
+
+
+let combineChoicesWithContext (getOptions: 'a -> (('a -> bigint -> 'b) -> bigint -> 'b) list) (initialContext: 'a): bigint -> 'b =
+
+    //  We add a parameter that now includes context
+    let rec chooseFunction context n =
+        let functionList = getOptions (context)
+        let length = bigint (List.length functionList)
+        let (d, r) = bigint.DivRem(n, length)
+        let f = functionList.[int (r)]
+        f chooseFunction d
+
+    chooseFunction initialContext
+
+
+let tryFiniteFirst (numberOfFiniteOptions: int) (finiteConstuctor: int -> 'b) (infiniteConstructors: ('a -> bigint -> 'b) list) =
+    let numberOfFiniteOptions = numberOfFiniteOptions - 1
+    let length = bigint (List.length infiniteConstructors)
+
+    if numberOfFiniteOptions >= 0 then
+        [ (fun enc n ->
+              if n <= (bigint numberOfFiniteOptions) then
+                  finiteConstuctor (int n)
+              else
+                  let n = n - (bigint (numberOfFiniteOptions + 1))
+                  let (d, r) = bigint.DivRem(n, length)
+                  let f = infiniteConstructors.[int r]
+                  f enc d) ]
+    else
+        infiniteConstructors
+```
+
+## An Example of Using the Toolkit
+
+```fsharp
 #load "godelian-toolkit.fsx"
 
 open GodelianTooklit
@@ -119,12 +206,6 @@ for i in 0I .. 10I do
     let e = createClosedTerm i
     printfn "Godel Number: %A = %A" i (e.ToString())
 
-
-let i = 234987234982734987234982374234I
-let e = createClosedTerm i
-printfn "Godel Number: %A = %A" i (e.ToString())
-
-
 // Produces examples like:
 
 // Godel Number: 0 = "λa.a"
@@ -139,5 +220,11 @@ printfn "Godel Number: %A = %A" i (e.ToString())
 // Godel Number: 9 = "(λa.a λa.λb.a)"
 // Godel Number: 10 = "λa.λb.λc.a"
 // Godel Number: 11 = "((λa.a λa.a) λa.λb.a)"
+
+
+```
+
+I'm trying to think of different examples other than the one above.   In this examples I would love for us to show a regular programmer who doesn't know lambda calculus how they can use this Godelian Toolkit to solve problems by constructing bijections and then enumerating over those bijections.  I would love to come up with some examples are that actually useful to regular programmers.   Can you think about it and then just pick one example write it up in F#, showing the programmer how to solve a useful problem?
+
 
 

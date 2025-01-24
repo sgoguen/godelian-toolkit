@@ -1,7 +1,8 @@
 import { builder } from "./builder.ts";
+import { encodePair } from "./toolkit.ts";
 import { assertEquals } from "jsr:@std/assert";
 
-type Term =
+type Term = 
     | { tag: "Var"; name: string }
     | { tag: "Lamda"; name: string; body: Term }
     | { tag: "App"; l: Term; r: Term };
@@ -38,16 +39,17 @@ const noVariables = new Variables(0n);
 
 const makeTerm = builder.withContext<Variables, Term>(
     noVariables,
-    (ctx, def) => {
+    (vars, def) => {
         return def
-            .addBounded(ctx.Count, (n) => ({ tag: "Var", name: ctx.Pick(n) }))
+            .addBounded(vars.Count, (n) => ({ tag: "Var", name: vars.Pick(n) }))
             .addUnbounded((enc, n) => {
-                const [name, newVars] = ctx.NewVar();
+                const [name, newVars] = vars.NewVar();
                 return { tag: "Lamda", name, body: enc(newVars, n) };
             })
             .addUnbounded((enc, n) => {
-                const l = enc(ctx, n);
-                const r = enc(ctx, n);
+                const [a, b] = encodePair(n);
+                const l = enc(vars, a);
+                const r = enc(vars, b);
                 return { tag: "App", l, r };
             });
     },
