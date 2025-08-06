@@ -1,0 +1,16 @@
+{
+  "name": "godelian-toolkit",
+  "version": "1.0.0",
+  "description": "The Gödelian Toolkit is a small library to helps you create a Gödelian numbering system for your toy programming language.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "tsc && node --test dist/*.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

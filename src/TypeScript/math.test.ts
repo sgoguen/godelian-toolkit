@@ -1,5 +1,6 @@
-import { combineChoices, encodePair } from "./toolkit.ts";
-import { assertEquals } from "jsr:@std/assert";
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { combineChoices, encodePair } from "./toolkit";
 
 // // Define a recursive type
 // type Expr =
@@ -44,10 +45,10 @@ function testInjectivity<T>(f: (n: bigint) => T) {
         const t = JSON.stringify(value);
         uniqueValues.add(t);
     }
-    assertEquals(uniqueValues.size, 100);
+    assert.strictEqual(uniqueValues.size, 100);
 }
 
-Deno.test("chooseExpr", () => {
+test("chooseExpr", () => {
     testInjectivity(chooseExpr);
 });
 
