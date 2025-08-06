@@ -1,6 +1,7 @@
-import { builder } from "./builder.ts";
-import { encodePair } from "./toolkit.ts";
-import { assertEquals } from "jsr:@std/assert";
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { builder } from "./builder";
+import { encodePair } from "./toolkit";
 
 type Term = 
     | { tag: "Var"; name: string }
@@ -55,11 +56,11 @@ const makeTerm = builder.withContext<Variables, Term>(
     },
 );
 
-Deno.test("builder", () => {
+test("builder", () => {
     for (let i = 0n; i <= 100n; i++) {
         const e = makeTerm(i);
         console.log(`Godel Number: ${i} = ${toString(e)}`);
     }
 
-    assertEquals(1, 1);
+    assert.equal(1, 1);
 });
